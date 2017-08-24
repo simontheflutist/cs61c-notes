@@ -1,1 +1,24 @@
-\chapter{Intro to Computer Architecture}
+\chapter{Intro to Computer Architecture	}
+\section{Everything is a number}
+The atom of computer information is a \emph{bit}.
+A \emph{byte} is 8 bits.
+A \emph{word} is 4 bytes.
+A FP number is 64 bits.
+
+\subsection{Binary and decimal}
+\begin{description}
+	\item[binary] \(\left\{0,1\right\}\)-linear sum of \(\ldots64, 32, 16, 8, 2, 1\).
+	\item[decimal] Sum of multiples of powers of 10 (familiar).
+\end{description}
+
+Convert \(x\) from decimal to binary, recursively
+building from left to right
+(most significant, second most significant\ldots):
+\begin{enumerate}
+	\item If \(x\) is 0, stop.
+	\item Parity of \(x\) is next most significant bit.
+	\item Floordiv \(x \leftarrow x/2\).
+	\item Back to first step.
+\end{enumerate}
+
+Hexadecimal groups 4 bits at a time.
