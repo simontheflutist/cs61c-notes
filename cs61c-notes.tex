@@ -1,0 +1,34 @@
+\documentclass[10pt,article,oneside]{memoir}
+
+\usepackage[protrusion, expansion,kerning,tracking,spacing]{microtype}
+
+\usepackage[utf8]{inputenc}
+%\usepackage{euler}
+
+\usepackage{lmodern}
+
+\usepackage{multicol}
+
+\usepackage{framed}
+\usepackage{xspace}
+
+\usepackage[T1]{fontenc}
+
+\usepackage[final]{pdfpages}
+\usepackage{graphicx}
+\usepackage{amsmath, amssymb, amsfonts, amsthm, commath}
+
+\microtypecontext{spacing=nonfrench}
+\nonfrenchspacing
+
+\counterwithout{section}{chapter}
+
+\begin{document}
+	\title{CS 61C notes}
+	\maketitle	
+	\clearpage
+	\tableofcontents
+	\clearpage
+	
+	\include{lecture1}
+\end{document}

@@ -218,3 +218,6 @@ TSWLatexianTemp*
 
 # expex forward references with \gathertags
 *-tags.tex
+
+# Can ignore this main PDF; don't necessarily ignore them all though.
+cs61c-notes.pdf
