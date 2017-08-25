@@ -6,3 +6,7 @@ myself this will help me make the most of my lectures and ideally
 work more efficiently and correctly on homework and projects.
 
 Open-sourcing because sharing is caring!
+
+## Build instructions
+
+    pdflatex cs61c-notes.tex
