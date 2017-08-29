@@ -9,4 +9,8 @@ Open-sourcing because sharing is caring!
 
 ## Build instructions
 
+The source uses the [minted](https://github.com/gpoore/minted/blob/master/source/minted.pdf) for source code formatting.
+You might need to install Pygments (e.g. `sudo pip3 install Pygments`).
+
     pdflatex cs61c-notes.tex
+
