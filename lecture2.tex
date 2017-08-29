@@ -1,0 +1,141 @@
+\chapter{Numbers and \emph{C Language}}
+\section{Numbers wrapup}
+\subsection{Signed Integer Representation}
+How should $-5$ be represented?
+\begin{description}
+	\item[sign and magnitude] 1 bit for sign, 7 bits for magnitude
+	
+	How to add \(a\) and \(b\):
+	\begin{enumerate}
+		\item if \(a > 0\) and \(b > 0\) add.
+		\item if \(a > 0\) and \(b < 0\) subtract.
+	\end{enumerate}
+	Confusion of \(\pm 0\)??
+	
+	Logic is too complicated.
+	\item[(idea) backwards by forwards?] How to add \(-1\) to a 4-bit number?
+	
+	\begin{tabular}{rr}
+		& 0111 \\
+		+ &???? \\ \hline
+		&10110
+	\end{tabular}
+	
+	If we use \(1101\), the result is correct. Instead of adding \(-x\) in \(\mathbb{Z}/2n\mathbb{Z}\), simply add the positive \(2n - x\) (there is a simple way to do this conversion, showed later). This is consistent for hardware implementations as all you have to do is
+	
+	\item[two's complement] Every number with a MSB of 1 is treated as negative.
+\end{description}
+
+\subsection{How do you convert a normal decimal integer to two's complement?}
+\begin{itemize}
+	\item \(\text{two's complement}\rightarrow\text{base 1}\): negate all bits and add 1.
+	\item \(\text{base 1}\rightarrow\text{two's complement}\): subtract 1 and negate all bits? (not sure\ldots)
+\end{itemize}
+
+\subsection{How do you detect overflow?}
+Some hardware overflows are not logical overflows.
+\begin{itemize}
+	\item Signs of operands are equal, \textsc{and}
+	\item Sign of result is different from sign of operands.
+\end{itemize}
+
+\subsection{Adding numbers of different bit widths}
+How could you add a 4-bit number to an 8-bit number?
+\begin{itemize}
+	\item For the unsigned case, \emph{zero extension} into upper bits.
+	\item If the number is signed, \emph{sign extension}: copy the sign bit (0 or 1) into all of the ``missing'' upper bits.
+\end{itemize}
+
+\section{C primer}
+C is meant to be somewhat similar to the native machine code that it's compiled on. 
+
+(some advantages and disadvantages omitted)
+
+\subsection{C dialects}
+\begin{itemize}
+	\item GCC supports this:
+\begin{minted}{c}
+int main(void) {
+	const int SZ = 5;
+	int a[SZ];
+	//  etc.
+}
+\end{minted}
+	\item But the official way is to do this:
+\begin{minted}{c}
+#define SZ 5
+int main(void) {
+	int a[SZ];
+	//  etc.
+}
+\end{minted}
+\end{itemize}
+
+\subsection{Preprocessor commands}
+\begin{itemize}
+	\item Comments replaced with single space.
+	\item \texttt{\#include "file.h"} inserts all of {inserts all of the file}.
+	\item \texttt{\#include <stdio.h>} \ldots
+	\item \texttt{\#define M\_PI (3.14159)} to define a constant.
+	\item \texttt{\#if}, \texttt{\#endif}, etc.\ for conditional compilation.
+	\item \texttt{-{}-save-temps} with GCC to show the \texttt{*.i} preprocessed file.
+\end{itemize}
+
+\subsection{Typed variables}
+\begin{itemize}
+	\item \texttt{int}, \texttt{long}, \texttt{double}, etc.
+	\item \texttt{const} variables never change.
+	\item \texttt{enum}:
+	
+	\begin{minted}{c}
+		typedef enum {red, green, blue} Color;
+		Color pants = green;
+		switch (pants) {
+			case red:
+				// ...
+				break;
+			// ...
+		}
+	\end{minted}
+	\item \texttt{int} size:\begin{description}
+		\item[Python] 32/\(\infty\)
+		\item[Java] 32
+		\item[C] 16 or 32 or 64
+	\end{description}
+	
+	Maybe helps processor work more efficiently---could all be 32!
+	
+	\begin{align*}
+		\text{short} \leq \text{int} \leq \text{long} \leq \text{long long}
+	\end{align*}
+	\item No boolean datatype in C.
+		\begin{minted}{c}
+			typedef int boolean;
+			const boolean false = 0;
+			const boolean true = 1;
+		\end{minted}
+		
+		0 and \texttt{NULL} are false; everything else is true.
+\end{itemize}
+
+\subsection{Functions}
+\begin{itemize}
+	\item Like Java.
+	\item Declare return and argument types.
+	\item \texttt{void} means nothing is returned.
+	\item Functions \emph{must} be declared before they are used.
+\end{itemize}
+
+\subsection{Undefined variables}
+\begin{minted}{c}
+	randomly_junk_the_stack();
+	// ...
+	int x;  // x is UNDEFINED
+	printf("x = %d\n", x);  // prints jink
+\end{minted}
+
+\subsection{\texttt{struct}s in C}
+\begin{itemize}
+	\item Groups of variables.
+	\item Like Java classes, but no methods.
+\end{itemize}
