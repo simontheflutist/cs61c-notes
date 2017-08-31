@@ -1,0 +1,52 @@
+\chapter{Pointers}
+\section{Pointers in C}
+\begin{minted}{c}
+int a;
+a = -85;
+printf("%d", a);
+\end{minted}
+\ldots yields the following (\emph{Type} and \emph{Name are just for notation}):
+
+\noindent
+\begin{tabular}{llrr}
+	Type & Name & Addr & Value\\ \hline
+	\vdots & \vdots & \vdots & \vdots \\
+	\texttt{int} & \texttt{a} & 100 & -85 \\
+	\vdots & \vdots & \vdots & \vdots \\
+\end{tabular}
+
+A pointer is a way of storing an memory address.
+
+\begin{minted}[tabsize=4]{c}
+int *x;     // x is an address of a int
+int y = 9;  // y is an int
+x = &y;     // x points to address of y
+            // "reference" operator
+int z = *x; // z gets the value of what x pointed to
+            // "dereference" operator
+*x = -7;    // assign -7 to x's target.
+\end{minted}
+
+\subsection{Generic pointer}
+\begin{itemize}
+	\item Points to \emph{any object}.
+	
+	\item \mint{c}{void *vp;}
+\end{itemize}
+
+\subsection{Pointer to struct}
+\begin{minted}{c}
+typedef struct { int x, y; } Point;
+
+// initialize point object
+Point pt = { 0, 5 };
+
+// declare pointer
+Point pt_ptr = &pt;
+
+// access elements
+(*pt_ptr).x = (*pt_ptr).y;
+
+// but alternative syntax is cooler
+pp->x = pp->y;
+\end{minted}
