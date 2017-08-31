@@ -5,7 +5,7 @@ int a;
 a = -85;
 printf("%d", a);
 \end{minted}
-\ldots yields the following (\emph{Type} and \emph{Name are just for notation}):
+\ldots yields the following (\emph{Type} and \emph{Name} are just for notation):
 
 \noindent
 \begin{tabular}{llrr}
@@ -50,3 +50,61 @@ Point pt_ptr = &pt;
 // but alternative syntax is cooler
 pp->x = pp->y;
 \end{minted}
+
+\subsection{Pointers as function arguments}
+\begin{minted}{c}
+void f(int x, int *p) {
+	// does nothing outside
+	x = 5;
+	// changes outside!!
+	*p = -9;
+}
+
+// e.g.
+int a = 1, b = -3;
+f(a, &b);
+// now a = 1 but b = -9.
+\end{minted}
+
+\section{Arrays}
+\begin{itemize}
+	\item To allocate:
+		\begin{minted}[autogobble]{c}
+		// allocate space
+		// unknown content
+		int a[5];
+		
+		// can also initialize at the same time
+		int b = { 3, 2, 1 };
+		\end{minted}
+	\item Array elements are matched sequentially in memory.
+	\item C doesn't check array bounds; if you read too far you'll get junk.
+	\item Define array size using a constant! (not a literal)
+	\begin{itemize}
+		\item Bad:
+			\begin{minted}[autogobble]{c}
+				int i, ar[10];
+				for(i = 0; i < 10; i++);
+			\end{minted}
+		\item Good:
+			\begin{minted}[autogobble]{c}
+			const int ARRAY_SIZE;
+			int i, ar[ARRAY_SIZE];
+			for(i = 0; i < ARRAY_SIZE; i++);
+			\end{minted}
+	\end{itemize}
+	\item \texttt{sizeof} works on bounds!
+		\begin{minted}[autogobble]{c}
+			int array[5];
+			// evaluates to 20:
+			sizeof(array);
+		\end{minted}
+		
+		but can be awkward on a \texttt{struct} because of padding:
+		\begin{minted}[autogobble]{c}
+			// should take up 2 + 2 bytes right???
+			struct { short a; char c; } s;
+			// evaluates to 4!
+			sizeof(s);
+		\end{minted}
+\end{itemize}
