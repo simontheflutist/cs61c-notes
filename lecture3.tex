@@ -108,3 +108,37 @@ f(a, &b);
 			sizeof(s);
 		\end{minted}
 \end{itemize}
+
+\section{Pointer arithmetic}
+\subsection{\texttt{char} example}
+\begin{minted}{c}
+#include <stdio.h>
+
+int main(void) {
+	char c[] = { 'a', 'b' };
+	
+	// c[] already is a pointer! (char[] = char*)
+	char *pc = c;
+	
+	// advance pc to the next location in the array
+	pc++;
+	
+	/*
+		(pc - c) is 1.
+	*/
+	
+	int i[] = { 10, 20 };
+	int *pi = i;
+	pi++;
+	/*
+		(pi - i) is 4.
+	*/
+}
+\end{minted}
+Pointer value is in bytes, but pointer arithmetic is in units of \texttt{sizeof(pointed\_to\_type)}.
+
+\subsection{Array name/pointer duality}
+\texttt{char *pstr} and \texttt{char astr[]} are about the same, except \texttt{astr++} is illegal (as though it were constant).
+
+\subsection{Arrays as arguments}
+\emph{An array is always passed as a pointer!} You need to pass in the size of the array, as \texttt{sizeof} will just evaluate to the size of the pointer representation (e.g.~32/64 bits).
