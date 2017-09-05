@@ -139,6 +139,7 @@ Pointer value is in bytes, but pointer arithmetic is in units of \texttt{sizeof(
 
 \subsection{Array name/pointer duality}
 \texttt{char *pstr} and \texttt{char astr[]} are about the same, except \texttt{astr++} is illegal (as though it were constant).
+The reason you can't mutate the array reference variable is that it's not a ``real'' variable but just a compiler name.
 
 \subsection{Arrays as arguments}
 \emph{An array is always passed as a pointer!} You need to pass in the size of the array, as \texttt{sizeof} will just evaluate to the size of the pointer representation (e.g.~32/64 bits).

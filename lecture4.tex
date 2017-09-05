@@ -1,0 +1,124 @@
+\chapter{Memory Management}
+\section{Pointers to pointers}
+You can mutate a pointer argument by using a pointer to a pointer.
+\begin{minted}{c}
+void next_el(nt **h) {
+	*h = *h + 1;
+}
+
+int main(void) {
+	int A[] = { 10, 20, 30 };
+	
+	// *p == 10
+	int *p = A;
+	
+	// mutates p
+	next_el(&p);
+	
+	// now *p == 20
+}
+\end{minted}
+\section{Strings in C}
+C strings are null-terminated character arrays.
+\begin{minted}{c}
+int slen(char s[]) {
+	int n = 0;
+	while (s[n] != 0)
+		n++;
+	return n;
+}
+
+int main(void) {
+	char str[] = "abc";
+	
+	slen(str);  // evaluates to 3.
+}
+\end{minted}
+
+\subsection{Concise \texttt{strlen()}}
+\begin{minted}{c}
+int strlen(char *s) {
+	char *p = s;
+	while (*p++);  // go one past the end
+	return p - s - 1;
+}
+\end{minted}
+
+\subsection{Arguments to \texttt{main}}
+\begin{minted}{c}
+int main(int argc, char * argv[]);
+\end{minted}
+\begin{itemize}
+	\item \texttt{argc} is the \emph{number} of commands
+	\item \texttt{argv} points to an array of strings.
+		\begin{itemize}
+			\item pointer to an array of pointers!
+			\item \texttt{argv[0]} is the name of the executable.
+		\end{itemize}
+\end{itemize}
+
+\section{C memory management}
+\begin{tabular}{ll}
+	Address & Contents\\\hline
+	FFFF\,FFFFF & stack (grows down)\\
+	\(\vdots\) & \(\vdots\) \\
+	? & heap (grows up) \\
+	? & static data (mutable) \\
+	0000\,0000 & code (immutable)
+\end{tabular}
+\begin{description}
+	\item[code] does not change.
+	\item[static data] loaded when program starts, \emph{can} be modified.
+	\item[stack] local args, allocated when function is called, grows downward (from higher to lower addresses).
+		\begin{itemize}
+			\item \emph{stack pointer} is a register that moves down with deepening calls to track where the last frame is
+		\end{itemize}
+	\item[heap] space for dynamic data, allocated and freed as needed.
+\end{description}
+
+\section{Stack}
+\begin{itemize}
+	\item Contents of a frame:
+		\begin{itemize}
+			\item function arguments
+			\item local variables
+			\item who called me? (for a return)
+		\end{itemize}
+\end{itemize}
+
+\section{Heap}
+\begin{itemize}
+	\item \texttt{malloc} allocates a block of memory
+	\item \texttt{calloc} allocates a zeroed block of memory
+	\item \texttt{free} frees previously allocated block of memory
+	\item \texttt{realloc} reallocates for the same data but a different size
+\end{itemize}
+
+\subsection{\texttt{malloc()}}
+\begin{minted}{c}
+void * malloc(size_t n);
+\end{minted}
+\begin{itemize}
+	\item \texttt{n} is an integer
+	\item \texttt{size\_t} is an unsigned int that \emph{counts} memory bytes
+	\item returns untyped, \texttt{void *}
+	\item \texttt{NULL} if there's no more memory.
+\end{itemize}
+
+\begin{minted}{c}
+#include <stdlib.h>
+
+int main(void) {
+	// array of 50 ints
+	int *ip = (int *) malloc (50 * sizeof(int));
+	
+	// typecast is optional
+	double *dp = malloc(1000 * sizeof(double));
+}
+\end{minted}
+
+\subsection{\texttt{free()}}
+\begin{minted}{c}
+void free(void *p);
+\end{minted}
+\texttt{p} must be the same address returned by \texttt{malloc}! Don't \texttt{free} a pointer that's not from \texttt{malloc}!
