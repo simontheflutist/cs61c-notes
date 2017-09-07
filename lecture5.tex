@@ -1,0 +1,88 @@
+\chapter{RISC-V Introduction}
+\section{Variables}
+
+\subsection{Registers}
+\begin{itemize}
+	\item Registers are very fast. They hold a single 32-bit value.
+	\item You can only perform computations on registers. (You can't on memory.)
+	\item RISC-V has 32 registers, \texttt{x0}--\texttt{x31}.
+	\item 32 bits are a word.
+	\item \texttt{x0} will always hold 0.
+	\item Unlike in high-level languages, a register has no type. The operation determines how a register is interpreted.
+\end{itemize}
+
+\section{Instructions}
+\begin{enumerate}
+	\item Every instruction has \emph{opcode} and \emph{operands}.
+	
+	\begin{minted}[autogobble]{asm}
+	add x1, x2, x3  # x1 = x2 + x3
+	sub x3, x4, x5  # x3 = x4 - x5
+	\end{minted}
+	\item How would you compile this?
+	\begin{minted}[autogobble]{c}
+	a = b + c + d - e;
+	\end{minted}
+	
+	\begin{minted}[autogobble]{asm}
+	add x10, x1, x2  # a_temp = b + c
+	add x10, x10, x3 # a_temp = a_temp + d
+	sub x10, x10, x4 # a = a_temp - e
+	\end{minted}
+\end{enumerate}
+
+\subsection{Immediates}
+\begin{enumerate}
+	\item Immediates are numerical constants. (Like ``literals.'')
+	\begin{minted}[autogobble]{asm}
+	addi x3, x4, -10  # f = g - 10
+	\end{minted}
+	\item Use \texttt{add} for ``\texttt{mov}''.
+	\begin{minted}[autogobble]{asm}
+	add x3, x4, x0  # f = g
+	\end{minted}
+\end{enumerate}
+
+\subsection{Data Transfer}
+\begin{itemize}
+	\item Register to memory is \emph{store}. Memory to register in \emph{load}.
+	\item In a little-endian machine, the lowest memory address holds the least significant byte.
+	\item 
+		\begin{minted}[autogobble]{c}
+		int A[100];
+		g = h + A[3];
+		\end{minted}
+		becomes
+		\begin{minted}[autogobble]{asm}
+		lw x10, 12(x13)  # x10 gets A + 4 words
+		add x11, x12, 10 # g = h + A[3]
+		\end{minted}
+	\item 
+		\begin{minted}[autogobble]{C}
+		int A[100];
+		A[10] = h + A[3];
+		\end{minted}
+		becomes
+		\begin{minted}[autogobble]{asm}
+		lw x10, 12(x13)    # temp reg x19 gets A[3]
+		add x10, x12, x10  # add h
+		sw x10, 40(x13)    # store in A[10]
+		\end{minted}
+	\item \texttt{lb} and \texttt{sb} load and store a \textbf{byte}. Because a register is 4 bytes, the byte is loaded into the least significant bits; the sign is extended through the more significant 24 bits. \texttt{lbu} loads an unsigned ``\texttt{short}'' which means you get guaranteed zero extension (there would be no need for \texttt{sbu} because \texttt{sb} discards the high bits anyway).
+\end{itemize}
+
+\subsection{More instructions}
+\begin{tabular}{ll}
+	C/Java & RISC-V \\\hline
+	\verb|&| & \texttt{and} \\
+	\texttt{x11 = x12 << 2} & \texttt{slli x11, x12, 2}
+\end{tabular}
+\begin{itemize}
+	\item \texttt{sra}, \emph{shift right arithmetic}, does sign extension on MSBs. Not the same as division. (WHY????)
+\end{itemize}
+
+\subsection{Branching}
+\begin{minted}{asm}
+beq register1, register2, L1  # if equal, then jump to L1.
+\end{minted}
+You also have \texttt{bne}, \texttt{blt}, \texttt{bge}. Unconditional jump is \texttt{j}.
