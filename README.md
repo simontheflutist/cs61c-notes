@@ -14,3 +14,5 @@ You might need to install Pygments (e.g. `sudo pip3 install Pygments`).
 
     pdflatex -shell-escape cs61c-notes.tex
 
+## To do:
+* Write a Pygments lexer for RISC-V assembly. `asm` is not doing the trick because it doesn't get my line endings right.
