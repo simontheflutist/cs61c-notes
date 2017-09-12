@@ -1,0 +1,160 @@
+\chapter{More RISC-V ISA}
+\subsection{Magnitude comparisons}
+\texttt{blt} ``branch less than'' is not the same as \texttt{bltu} ``branch less than unsigned.''
+
+\subsection{Loop example}
+\begin{multicols}{2}
+	\begin{minted}{c}
+int A[20];
+int sum = 0;
+for (int i = 0; i < 20; i++)
+
+
+	sum += A[i]
+	\end{minted}
+	\columnbreak
+	\begin{minted}{asm}
+	addi x9, x8, 0    # x9 = &A[0]
+	addi x10, x0, 0   # sum = 0
+	addi x11, x0, 0   # i = 0
+Loop:
+	lw x12, 0(x9)     # x12 = A[i]
+	add x10, x10, x12 # sum += x12
+	
+	addi x9, x9, 4    # &A[i++]
+	addi x11, x11, 1  # i++
+	addi x13, x0, 20  # x13 = 20
+	blt x11, x13, Loop
+	\end{minted}
+\end{multicols}
+
+\section{Programs}
+\subsection{How a program is stored}
+One RISC-V instruction is 32 bits. It's next to all the other data.
+\subsection{Program execution}
+\begin{itemize}
+	\item PC is a register holding byte address of next instruction to be executed.
+	\item Instruction fetched, control unit executes using datapath and memory system, increment PC; repeat.
+\end{itemize}
+
+\section{RISC-V assembler}
+\subsection{Helpful features}
+\begin{itemize}
+	\item \texttt{a0}--\texttt{a7} correspond to \texttt{x10}--\texttt{x17}, \emph{argument registers}
+	\item \texttt{zero} = \texttt{x0}
+	\item \texttt{mv rd, rs} = \texttt{addi rd, rs, 0}
+	\item \texttt{li rd, 13} = \texttt{addi rd, x0, 13}
+\end{itemize}
+
+\subsection{Function call}
+It takes six steps to call a function.
+\begin{enumerate}
+	\item Put the parameters in a place where the function can access them.
+	\item Transfer control to function.
+	\item Acquire local storage for function.
+	\item Perform function's desired task.
+	\item Put result value in a place where calling code can access it; then release storage.
+	\item Return control to caller.
+\end{enumerate}
+
+\subsection{Function call conventions}
+\begin{itemize}
+	\item \texttt{a0}--\texttt{a7} store arguments.
+	\item \texttt{a0}--\texttt{a1} store return values.
+	\item \texttt{ra}=\texttt{x1} holds return address (where you jump back to when you're done).
+	\item\begin{minted}{c}
+// somewhere
+{sum(a,b);}
+
+int sum(int x, int y) {
+	return x + y;
+}
+	\end{minted}
+	
+	\begin{verbatim}
+	1000 mv a0, s0 # x = a
+	1004 mv a1, s1 # y = b
+	1008 addi ra, zero, 1016 # stores ra
+	1012 j sum
+	1016 # return here
+	# ...
+	2000 sum: add a0, a0, a1 # does subroutine logic
+	2004 jr ra # return control
+	\end{verbatim}
+	\item \texttt{jal} (jump and link) writes to \texttt{ra} and jumps. (shortcut for \texttt{addi} and \texttt{j})
+	\item \texttt{ret}  = \texttt{jr ra}
+\end{itemize}
+
+\subsection{Function call example}
+\begin{multicols}{2}
+\begin{minted}{c}
+// C version
+int Leaf
+(int g, int h, int i, int j) {
+	int f;
+	
+	
+	
+	f = (g + h) - (i + j);
+	
+	
+	
+	
+	
+	
+	
+	return f
+}
+\end{minted} 
+\columnbreak
+\begin{verbatim}
+# adjust stack for two items
+Leaf: addi sp, sp, -8
+
+# push s0 and s1 onto the stack
+      sw s1, 4(sp)  
+      sw s0, 0(sp)
+	  
+      add s0, a0, a1
+      add s1, a2, a3
+      sub a0, s0, s1
+	  
+# pop s0 and s1]	
+      lw s0, 0(sp)
+      lw s1, 4(s0)
+      addi sp, sp, 8
+      jr ra
+\end{verbatim}
+\end{multicols}
+
+Old registers are stored in the stack. The \emph{stack pointer} is \texttt{sp}=\texttt{x2}.
+
+\subsection{Function that calls a function}
+\texttt{a0}--\texttt{a7} and \texttt{ra} can't be overwritten!
+\begin{minted}{c}
+int sumSquare(int x, int y) {
+    return mult(x, x) + y;
+}
+\end{minted}
+
+RISC-V divides registers into two categories:
+\begin{enumerate}
+	\item Preserved across function call (you have to push and restore):
+		\begin{itemize}
+			\item \texttt{sp} \emph{stack pointer}
+			\item \texttt{gp}
+			\item \texttt{s0}--\texttt{s11} \emph{saved registers}
+		\end{itemize}
+	\item Not preserved across function call (free to use). 
+		\begin{itemize}
+			\item \texttt{a0}--\texttt{a7} \emph{argument/return registers}
+			\item \texttt{ra} \emph{return address}
+			\item \texttt{t0}--\texttt{t6} \emph{temporary registers}
+		\end{itemize}
+\end{enumerate}
+
+Whereas C has two storage classes.
+\begin{description}
+	\item[automatic] variables local to function, discarded
+	\item[static] variables that persist globally
+\end{description}
