@@ -1,0 +1,44 @@
+\chapter{RISC-V Instruction Encoding}
+Computers nowadays are the stored-program sort.
+This design has consequences:
+\begin{enumerate}
+  \item Everything is a memory address.
+    Instructions and data live side by side, and it is easy to break things.
+  \item Binary compatibility must be a thing.
+    People want old programs to run on new systems. Most ISAs are backwards-compatible.
+    \begin{itemize}
+      \item Most data is words---how then, are instructions represented?
+      \item Every line of assembly is mapped to a 32-bit word.
+        Instructions are the same size irrespective of word size!
+      \item An instruction is broken up into fields according to type.
+        \begin{description}
+          \item[R-format] does register-register arithmetic.
+          \item[I-format] handles instructions with immediates. S-format allows only 5 bits, but that might not be enough. In the I-format, the funct7 code becomes part of a 12-bit immediate. At runtime, this immediate is sign-extended to 32 bits.
+	          \begin{itemize}
+	          	\item Shift-immediate instructions are an exception and use only 5 bits since you can't shift more than 31. (They are the LSBs of the standard I-format.)
+	          	\item Load instructions are also I-type! The ``immediate'' field encodes the offset.
+	          \end{itemize}
+          \item[S-format] is for store instructions. Different from I-format Load because the immediate field is split into \(8+4\).
+          \item[B-format] is for branch instructions. The immediate is twos-complement PC offset that is multiplied by 2 to increment the PC, and the immediate is broken up all over the place. (You can represent -4096 to 4094 PC displacement.)
+
+          Example:
+          \begin{minted}{asm}
+Loop:  beq x19, x10, End
+       add x18, x18, x10
+       addi x19, x19, -1
+       j Loop
+End:   # target
+          \end{minted}
+          In this loop, the conditional branch to \texttt{End} is 4 instructions, which is \(4\cdot32\) \text{bits}, which is \(16 = 8\cdot2\) bytes. The immediate field of this branch code
+          \begin{itemize}
+          	\item Why is immediate encoding so painfully irregular? It's to simplify the hardware that aligns immediate encoding to an immediate value.
+          \end{itemize}
+          \item[U-format] for upper immediate. This one is weird because it has a huge 20-bit immediate and a destination and nothing else. If you want an entire 32-bit constant, first you \texttt{lui} (load upper immediate) the top 20 bits than \texttt{addi} the last 12.
+          \begin{itemize}
+          	\item There is a horrible complication! \texttt{addi} is always sign extended, so if the 12th bit is 1, \texttt{addi} will subtract 1 from the upper 20 bits.
+          	\item This is a horror that is hidden by a gracious assembler pseudo-op: \texttt{li} loads a 32-bit constant that loads +1, \texttt{addi}s.
+          \end{itemize}
+          \texttt{auipc} adds a 20-bit int to the program counter.
+        \end{description}
+    \end{itemize}
+\end{enumerate}
