@@ -1,0 +1,44 @@
+\chapter{Running a Program—CALL}
+\section{Instruction formats review}
+Technically 6, but there are very nearly 4 formats.
+\begin{description}
+	\item[R-type] \verb|rd = rs1 OP rs2|
+	\item[I-type] \verb|rd = rs1 OP imm|; load \texttt{rd} from memory at (\texttt{rs1} + \texttt{imm}); JALR.
+	\item[S-type] Store \verb|rs2| to memory at (\texttt{rs1}+\texttt{imm}).
+	\item[B-type] If (\texttt{rs1} cond \texttt{rs2}) branch to memory at (\texttt{PC} + \(2\left(\text{\texttt{imm}}\right)\)).
+	\item[U-type] For huge numbers.
+	\item[J-type] Used for JAL:
+	\begin{itemize}
+		\item \texttt{PC} + 4 goes into \texttt{rd}, 0 if a return is not necessary.
+		\item \texttt{PC} = \texttt{{PC}} + \(2\left(\text{\texttt{imm}}\right)\)
+			\begin{itemize}
+				\item Can jump up to \(\pm2^{18}\) 32-bit instructions, \(\pm2^{20}\) bytes.
+			\end{itemize}
+	\end{itemize}
+	also used for JALR:
+	\begin{itemize}
+		\item \texttt{JALR rd, rs, imm} writes (\texttt{PC} + 4) to \texttt{rd}.
+		\item \texttt{ret} = \texttt{jalr x0, ra, 0}.
+	\end{itemize}
+	You can also use JALR to go to a 32-bit absolute address after \texttt{lui}.
+\end{description}
+
+\section{Multiply and divide}
+\subsection{Integer case}
+Integer multiplication is just like elementary school multiplication. When you multiply two 32-bit quantities, you could get a 64-bit value.
+\begin{itemize}
+	\item \texttt{MUL} gives you the lower 32 bits.
+	\item \texttt{MULH} gives you the upper 32 bits.
+\end{itemize}
+
+Integer division is just like elementary school multiplication.
+\begin{itemize}
+	\item \texttt{div} stores floordiv.
+	\item \texttt{rem} stores remainder.
+\end{itemize}
+
+\section{CALL}
+\begin{description}
+	\item[compiler] Input: high-level code. Output: assembly language, may contain pseudo-instructions.
+	\item[assembler] Input: assembler files. Output: object code, which contains hints for the linker and the loader.
+\end{description}
