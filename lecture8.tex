@@ -41,4 +41,32 @@ Integer division is just like elementary school multiplication.
 \begin{description}
 	\item[compiler] Input: high-level code. Output: assembly language, may contain pseudo-instructions.
 	\item[assembler] Input: assembler files. Output: object code, which contains hints for the linker and the loader.
+	\begin{itemize}
+		\item Generates \emph{text} (code), \emph{data}, and \emph{info} sections.
+	\end{itemize}
+	\item[linker] Input: object code. Output: executable. \emph{Links} with resources. Four types of addresses:
+	\begin{itemize}
+		\item \texttt{PC}-relative addressing
+			\begin{itemize}
+				\item \texttt{beq}, \texttt{bne}, \texttt{jal}
+				\item \texttt{lla}: \texttt{auipc}, \texttt{addi}
+			\end{itemize}
+		\item Absolute/external function addresses
+			\begin{itemize}
+				\item \texttt{la}: \texttt{auipc}/\texttt{lw} + \texttt{jalr}
+			\end{itemize}
+		\item Static data references
+			\begin{itemize}
+				\item \texttt{lui}/\texttt{addi}
+			\end{itemize}
+	\end{itemize}
+	\item[loader] Input: executable code. Output: \emph{program gets run}.
+		\begin{enumerate}
+			\item Reads executable's header to determine size of text and data.
+			\item Creates large enough address space and stack segment.
+			\item Copies instructions and data into memory.
+			\item Copies arguments passed onto the stack.
+			\item Initializes registers.
+			\item Jump to start-up routine that copies arguments into registers and sets the PC.
+		\end{enumerate}
 \end{description}
