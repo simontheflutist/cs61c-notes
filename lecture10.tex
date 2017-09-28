@@ -1,0 +1,75 @@
+\chapter{Logic datapath}
+\section{Boolean algebra}
+Sum denotes \textsc{or}, and product denotes \textsc{and}.
+\subsection{Algebraic simplification}
+\begin{align}
+y &= \left(\left(ab\right) + a\right) + c\\
+&= ab + a + c\\
+&= a\left(b + 1\right) + c\\
+&= a + c
+\end{align}
+\section{Timing and state machines}
+How does a circuit behave over time?
+\emph{Synchronous Digital Systems} consist of two basic types of circuits:
+\begin{description}
+	\item[combinational logic] output is a function of inputs (this is more familiar)
+	\item[sequential logic] circuits that store state (e.g. \emph{for} loop)
+\end{description}
+
+State elements such as register files (1--31) and memory (caches and main memory) help control flow of information between combinational blocks.
+\section{Program Counter design}
+The PC, which stores the instruction address.
+After an instruction, PC is incremented by 4.
+But if \(\text{PC} + 4\) is on the same wire as  \(\text{PC}\),
+then the adder circuit blows up and runs off.
+
+Solution: use a global \emph{clock} to synchronize instructions
+so that the PC will not tick until other instructions are ready.
+The PC increment circuit will be a \emph{register} that holds state
+(which is the state that it will output until signaled by the clock).
+When the register goes from low to high, it will sample its input (\(\text{PC}+4\)) but not output it until the clock transitions again.
+
+\subsection{RS flip-flip}
+Inputs \(S\), \(R\); outputs \(\overline{Q}\), \(Q\). (I don't know how to draw circuits). \(\overline{Q} = \operatorname{NOR}\left(S, Q\right)\) and \(Q = \operatorname{NOR}(\overline{Q}, R)\). \(S\) is the set signal---if you raise it to 1, \(Q\) will stick to 1 until \(R\) (reset) is triggered.
+
+(These are called flip-flops because in the old days they were electro-mechanical relays.)
+
+\subsection{(Positive) edge-triggered flip-flop}
+Instead of separate \emph{set} and \emph{reset} signals, use a single wire---\(S = D\), \(R = \lnot D\). In this circuit there is also a clock signal: the register output is not allowed to change until the clock tick is signaled.
+
+\subsection{PC clock}
+Inside a PC implementation:
+\begin{enumerate}
+	\item (Input is currently \((\text{PC}+4)\); output is currently PC.)
+	\item Clock ticks.
+	\item Output is changed to current input \((\text{PC}+4)\).
+	\item Input is changed to new input \((\text{PC}+8)\).
+	\item Repeat at next tick.
+\end{enumerate}
+
+Every rising clock edge, you have until the next rising edge to complete the instruction. \(f_s = \left(t_\text{cycle}\right)^{-1}\)\ldots we ask then, is there a \textbf{maximum clock speed} at which the PC circuit can still function? Consider that there is a D-flip-flop for each bit of the PC.
+\begin{enumerate}
+	\item \(t_\text{setup}\) is how long the input has to be around before the clock ticks.
+	\item \(t_\text{hold}\) is how long the input sticks after the clock ticks.
+	\item \(t_\text{clk-to-Q}\) is how long after the clock ticks before output changes.
+\end{enumerate}
+To evaluate the fastest possible bandwidth, consider \(t_\text{CL}\), which is how long it takes for combinational logic to evaluate, and \(\left(t_\text{setup} + t_\text{clk-to-Q}\right)\), which is how long the register takes (generally \(t_\text{CL}\gg t_\text{hold}\) by circumstance and design, respectively).
+
+At this point \(t_\text{cycle}\ge t_\text{clk-to-Q} + t_\text{CL} + t_\text{setup}\).
+
+\section{Finite State Machine}
+Idea: detect the occurrence of 3 consecutive 1's in the input. (\emph{Finite} state machine because the memory is finite.)
+
+To implement an FSM using combinational logic, encode this way:
+
+\begin{tabular}{lr}
+	State & Code \\\hline
+	\(S_0\) & 00 \\
+	\(S_1\) & 01 \\
+	\(S_2\) & 11
+\end{tabular}
+
+The transition/output graph can be expressed as a truth table \(\left(\text{previous state}, \text{input}\right)\mapsto\left(\text{next state}, \text{output}\right)\).
+
+\section{Multiplexer}
+In the datapath, occasionally multiple wires come together, and you need to choose between them. A multiplexer is a switch that takes a signal to select one of two inputs to output.
