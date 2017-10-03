@@ -1,0 +1,92 @@
+\chapter{RISC-V datapath}
+\subsection{Where is the the state in RISC-V?}
+\begin{description}
+	\item[registers] \texttt{x0}\ldots\texttt{x31}.
+		\texttt{Reg} holds 32 registers at 32 bits/register.
+		\texttt{rs1} field is always the first register;
+		\texttt{rs2} field is always the second register;
+		\texttt{rd} field stores the destination.
+		\texttt{Reg[0]} is always 0 (writes are ignored).
+	
+	\item[PC] holds address of current instruction
+	
+	\item[memory] 32-bit byte-addressed memory space for instructions annd data.
+		\texttt{IMEM} holds instructions and \texttt{DMEM} holds data. 
+		\texttt{IMEM} will be considered read-only. \texttt{DMEM} is accessed only by load/store.
+\end{description}
+
+\section{1 instruction-per-cycle RISC-V implementation}
+\begin{align*}
+\begin{pmatrix}
+\texttt{PC} \\
+\texttt{IMEM} \\
+\texttt{Reg[]}\\ 
+\texttt{DMEM}\\
+\end{pmatrix}
+\xrightarrow{\text{clock rises}}{}
+\left(\texttt{next state}\right)
+\end{align*}
+
+While the clock is on, nothing changes in the state.
+
+\begin{enumerate}
+	\item Instruction fetch. (\texttt{DMEM})
+	\item Decode/register read. (\texttt{IMEM})
+	\item Execute. (ALU)
+	\item Store memory. (\texttt{DMEM})
+	\item Register write (\texttt{REG[]})
+\end{enumerate}
+
+\subsection{\texttt{add} instruction}
+We need
+\begin{align}
+\texttt{Reg}\left[\texttt{rd}\right] &= \texttt{Reg}\left[\texttt{rs1}\right] + \texttt{Reg}\left[\texttt{rs2}\right] \\
+\texttt{PC} &= \texttt{PC} + 4
+\end{align}
+
+\begin{enumerate}
+	\item \texttt{PC} read and incremented.
+	\item \texttt{IMEM} dereferenced by \texttt{PC}.
+	\item Instruction passed to control logic that decides instruction (signal to \texttt{Reg[]}).
+	\item \texttt{rs1}, \texttt{rs2}, \texttt{rd} dereferenced in \texttt{Reg[]}.
+	\item ALU does add logic.
+	\item \texttt{Reg[]} mutated.
+\end{enumerate}
+The control line that decodes the instructions signals RW-enable in the register and signals the ALU to do the right operation. Most R-format instructions can be implemented this way, depending on what the ALU hears from the control line.
+
+\subsection{\texttt{add} timing}
+\newcommand{\ditto}{\ensuremath{\downarrow}}
+%\newcommand{\ditto}{\ensuremath{{\left\downarrow\vbox to {}\right.\kern-\nulldelimiterspace}}}
+\noindent
+
+\begin{tabular}{llllllll}
+	Clock  & \texttt{PC} & \texttt{PC} + 4 & \texttt{inst}[31:0]                                   & \texttt{R[rs1]} & \texttt{R[rs2]} & ALU                               & \texttt{Reg[1]}                   \\ \hline
+	0      & *           &  \\
+	1      & 1000        & *               & *                                                     &  \\
+	\ditto & \ditto      & 1004            & {}{\texttt{add} \texttt{x1},\texttt{x2}, \texttt{x3}} & *               & *               &  \\
+	0      & \ditto      & \ditto          & \ditto                                                & \texttt{Reg[2]} & \texttt{Reg[3]} & *                                 &  \\
+	\ditto & \ditto      & \ditto          & \ditto                                                & \ditto          & \ditto          & {}{\texttt{R[2]} +~\texttt{R[3]}} & * \\
+	1      & \ditto      & \ditto          & \ditto                                                & \ditto          & \ditto          & \ditto                            & *                                 \\
+	\ditto & \ditto      & \ditto          & \ditto                                                & \ditto          & \ditto          & \ditto                            & {}{\texttt{R[2]} +~\texttt{R[3]}}
+\end{tabular}
+
+\subsection{More instruction}
+\begin{description}
+\item [\texttt{addi}]
+Add an \emph{Immediate Generator} that multiplexes instruction and control logic that is switched for \texttt{rs2} in ALU input.
+Then this datapath design works for all I-format instructions.
+
+\item[\texttt{lw}]
+The \texttt{lw} instruction is pretty similar to \texttt{addi}, except at the last step before going back you add a path through DRAM (signaled read-enable by control line) and then this load path is muxed by a control line switch.
+
+\item[\texttt{sw}]
+Add a data write port to DRAM. Add a path from \texttt{rs2} to DMEM, which is now getting signaled for \emph{write}. Control line signals 0 to register write.
+
+\item[B-format]
+Add paths:
+\begin{enumerate}
+	\item Register comparator mux to control line.
+	\item PC mux to ALU.
+	\item ALU output mux to PC, signaled by control line.
+\end{enumerate}
+\end{description}
