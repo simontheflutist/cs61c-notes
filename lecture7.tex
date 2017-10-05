@@ -19,6 +19,10 @@ This design has consequences:
 	          	\item Load instructions are also I-type! The ``immediate'' field encodes the offset.
 	          \end{itemize}
           \item[S-format] is for store instructions. Different from I-format Load because the immediate field is split into \(8+4\).
+          
+	      \begin{quotation}
+	      	\textsc{Warning} \texttt{rs1} and \texttt{rs2} seem to be reversed!
+	      \end{quotation}
           \item[B-format] is for branch instructions. The immediate is twos-complement PC offset that is multiplied by 2 to increment the PC, and the immediate is broken up all over the place. (You can represent -4096 to 4094 PC displacement.)
 
           Example:
