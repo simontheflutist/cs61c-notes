@@ -1,0 +1,88 @@
+\chapter{More datapath}
+\begin{description}
+	\item[jal] add route for PC
+	\item[U-format] control flag to immediate generator
+\end{description}
+\emph{datapath truth table omitted}
+
+\emph{Why should we signal read or write to memory/register?}
+There's always a data input to the state element; only if you \emph{signal} an (exclusive) write to memory or \emph{enable} a write to register does the state get mutated.
+
+\section{Control realization}
+\begin{description}
+	\item[read-only memory] manually programmed to add instructions with a regular structure
+	\item[logic synthesis] circuits generated from a logic spec
+\end{description}
+
+RV32 has 47 instructions decided by 9 bits, which makes for a very sparse encoding. That helps make hardware decoding easier.
+For 9 control inputs and two comparators and 15 bit outputs, you need \(2^11 \cdots 15\), about 4 kilobytes of memory.
+
+\section{Instruction execution timing}
+\begin{enumerate}
+	\item PC updates
+	\item Instruction fetch
+	\item Instruction decode
+	\item Execute ALU
+	\item Read memory
+\end{enumerate}
+
+\begin{tabular}{lcccccr}
+	Instr & IF (200\,ps)  & ID (100\,ps) & ALU (200\,ps) & MEM (100\,ps) & WB & Total\\\hline
+	add & x & x & x &  & x & 600ps\\
+	jal & x & x & x &  & & 500ps\\
+	lw & x & x & x & x & x & 800ps
+\end{tabular}
+
+\section{Performance}
+\subsection{Performance measurements}
+We designed a RISC-V processor for 1.25\,GHz. What is desired by performance? Do the thing faster, do more things, take less power?
+
+\begin{tabular}{l|rr}
+	& Sports Car & Bus \\\hline
+	Passenger capacity & 2 & 50 \\
+	Travel speed & 200 mph & 50 mph \\
+	Gas mileage & 5 mph & 2mpg
+\end{tabular}
+
+On a 50 mile trip:
+
+\begin{tabular}{l|rr}
+	& Sports Car & Bus \\\hline
+	Travel time & 15 min & 60 min \\
+	Time for 100  & 750 min & 120 min \\
+	Gas per passenger & ?  & 0.5 mpg
+\end{tabular}
+
+Analogy:
+
+\begin{tabular}{ll}
+	Transportation & Computer \\\hline
+	trip time & \emph{program} execution time \\
+	time for 100 &  \\
+	gas per passenger & \emph{energy} per task \\
+\end{tabular}
+
+\subsection{Iron Law}
+\begin{align}
+	\frac{\text{time}}{\text{program}} &= 
+	\left(\frac{\text{instructions}}{\text{program}}\right)
+	\left(\frac{\text{cycles}}{\text{instruction}}\right)
+	\left(\frac{\text{time}}{\text{cycle}}\right)
+\end{align}
+
+\(\frac{\text{instructions}}{\text{program}}\) depends on task, algorithm, programming language, compiler, and ISA. Average \(\frac{\text{cycles}}{\text{instruction}}\) is 1 one our single-cycle datapath, but can vary depending on ISA, processor implementation, and microarchitecture (some CISC instructions take a long time; some can take place at the same time). \(\frac{\text{time}}{\text{cycle}}\) is determined by architecture (e.g.~length of critical path), technology (transistor size), power budget (higher voltages speed transistors).
+
+\subsection{Energy per task}
+\begin{align}
+\frac{\text{energy}}{\text{program}}
+&= \left(\frac{\text{instructions}}{\text{program}}\right)
+\left(\frac{\text{energy}}{\text{isntructions}}\right)\\
+& \propto \frac{\text{instructions}}{\text{program}}
+\left(CV^2\right)
+\end{align}
+
+Capacitance depends on the physical complexity of your processor---how many things have to change?
+\emph{Energy matters!} because a lot of systems are power-constrained (e.g.~20\,MW datacenter) or energy-constrained (e.g.~phone).
+
+\subsection{End of scaling}
+Voltages lower than 1\,V are hard on transistors because they become too much like dimmer switches and leak. Nowadays you can't cut capacitance much either, as it's getting harder to shrink transistors. As a result, an air-cooled chip cannot consume more than 150\,W. (The power constraint also constrains frequency to about 3\,GHz).
