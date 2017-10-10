@@ -1,0 +1,64 @@
+\chapter{Pipelining}
+\emph{too much diagrams so I didn't really record the sample pipelined CPU\ldots}
+
+%\section{Pipelined control}
+Control signals are derived from the instruction,
+but are stored in \emph{pipeline registers} (not sent immediately).
+
+\section{Hazards}
+\subsection{Structural}
+\begin{description}
+	\item[problem] two or more instructions in the pipeline compete for access to a single physical resource.
+	\item[solution 1] lock the resource and let one instruction stall.
+	\item[solution 2] add more hardware to machine (e.g.~support simultaneous memory accesses)
+	\begin{itemize}
+		\item Register solution: add more ports.
+		\item Memory solution: separate IMEM and DMEM (behind the scenes, instructions and data are cached separately).
+	\end{itemize}
+\end{description}
+
+\subsection{Data}
+\begin{itemize}
+\item register:
+\begin{description}
+	\item[problem] what happens if at one pipeline stage a register is being written and read in a single clock cycle? (by different instructions)
+	\item[solution] actually you can do a \emph{write} in half a clock cycle and \emph{read} in the next half, so there is no danger after all.
+\end{description}
+
+\item ALU result:
+\begin{description}
+	\item[problem] what if one instruction depends on the previous instruction's ALU result?
+	\item[solution 1] stall: fill the instruction pipeline with NOPs until the first instruction's ALU output is ready for the second instruction.
+	\begin{itemize}
+		\item a compiler that is aware of the pipeline structure can arrange code in order to avoid hazards and stalls.
+	\end{itemize}
+	\item[solution 2] forwarding: you \emph{have} the ALU output right after the ALU executes, even though it hasn't gotten written to the register yet.
+	An ALU output is routed straight back into the ALU, with no need for register write.
+	\begin{enumerate}
+		\item Detect need for forwarding: compare \texttt{inst1.rd} and \texttt{inst2.rs1}. (If equal, we will do forwarding.)
+		\item ALU output register and register write data are muxed back into ALU input.
+	\end{enumerate}
+\end{description}
+
+\item load:
+\begin{description}
+	\item[problem] instruction 1 loads into a register; instruction 2 has to operate on the same register.
+	\item[solution] not much: you \emph{must} stall one instruction before you can forward.
+		This hazard forces a \emph{load delay slot}. But as a programmer/compiler, you can order instructions so that load delays are minimized.
+\end{description}
+\end{itemize}
+
+\subsection{Control}
+\begin{description}
+	\item[problem] Instruction 1 has a branch. Until the ALU tells you where to go, two instructions are iffy.
+	\item[solution] If the branch is not taken, then the iffy instructions are correct. But if the branch is taken, then the iffy instructions have to be flushed (killed) with NOPs right away. \emph{Branch prediction} can make this happen less.
+%	\item[solution 2] Hardware uses branch prediction
+\end{description}
+
+\section{Superscalar processors}
+How do they make really fast processors?
+\begin{description}
+	\item[clock rate] limited by technology and power dissipation.
+	\item[pipelining] you can pipeline up to 40 stages---hazards though.
+	\item[simultaneous execution] use a lot of ALUs and control logic to instructions simultaneously. This makes branch prediction very important, as you might have advanced hundred instructions.
+\end{description}
