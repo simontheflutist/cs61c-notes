@@ -1,0 +1,32 @@
+\chapter{Caches I}
+\section{Memory is slow}
+To access memory is analogous to looking up a book in a large library: you have to:
+\begin{enumerate}
+	\item Find an address (physical location).
+	\item Make a round trip to the physical location.
+\end{enumerate}
+Both latencies are greater for bigger libraries.
+There are three kinds of memory:
+\begin{description}
+	\item[SRAM] is very fast, almost as fast as processors.
+	\item[DRAM] is much slower but also much cheaper.
+	\item[disk] is very slow but big and cheap. Mainly for persistence nowadays.
+\end{description}
+
+Memory gets faster very slowly (about 7\% a year), whereas CPUs get faster very quickly (55\% a year until 2004.)
+In 1980, you could execute 1 instruction per DRAM access;
+in 2017, you can execute 1000.
+Big ideas are at work:
+\begin{description}
+	\item[memory hierarchy] you have small amounts of fast memory and large amounts of slow memory.
+	\item[locality] \emph{temporal locality} means that if a memory location is referenced, it'll likely get referenced again soon. \emph{spatial locality} means that if you need to access some memory, you'll likely need to access nearby memory.
+\end{description}
+
+Solution: add a special hiding place, called the cache.
+If it's already there, we got a \emph{hit}.
+Or else, there's a \emph{miss}: get the new value and put it in.
+
+Cache is associative memory. It's a table from \emph{tag} to \emph{data}. If you have to refill cache,
+retain the most recently used blocks.
+
+It is hard to search cache, so partition it into ``sets.''
