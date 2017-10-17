@@ -1,0 +1,80 @@
+\chapter{Cache architecture}
+Accessing the register file is extremely fast, completing
+within a clock cycle. Memory is accessed much slower, but
+usually it is not so, as it is read from instruction and
+data caches.
+Newer processors have several levels of caches.
+
+\emph{Locality} and \emph{memory hierarchy} present the programmer with as much memory is available in the cheapest technology at the speed offered by the fastest technology.
+
+What happens in the event of a cache miss?
+\begin{enumerate}
+	\item NOP-stall the processor while cache is coming.
+	\item Better processors will work on another thread.
+\end{enumerate}
+
+\subsection{Cache organizations}
+\begin{description}
+	\item [fully associative]
+	the block is placed \emph{anywhere} in cache.
+	A lot of blocks of memory are fighting to get a spot in the cache.
+	\begin{itemize}
+		\item One comparator per block to check presence
+	\end{itemize}
+	\item [direct mapped] the block's location is mapped to exactly one location in cache.
+	\begin{itemize}
+		\item Only need one comparator.
+	\end{itemize}
+	\item[n-way set associative] $N$ places for block in cache (compromise between fully associative and direct mapped).
+	\begin{itemize}
+		\item Needs $N$ comparators.
+	\end{itemize}
+\end{description}
+
+Memory blocks are addressed in 8 bytes (3 LSBs are 0) (cf.~words [2 LSBs 0].).
+A processor address field contains this stuff:
+\begin{description}
+	\item[block offset] byte address (mod 8) within block
+	\item[set index] determines which set this cache block serves
+	\item[tag] remaining portion of processor address
+\end{description}
+
+\begin{align}
+	\text{\# cache blocks} &= \left(\text{\# places a memory block can go}\right) \left(\text{\# sets}\right)
+\end{align}
+
+\subsection{Direct-mapped example}
+The cache tag has a ``valid bit'' that tells whether the cache block is accurate.
+The least significant bits (2 in this example) set the index, and the most significant bits
+(still haven't got all of them)
+set the tag. If adjacent memory blocks competed for cache space, that would be bad for spatial locality. A single row of the cache is \texttt{index, valid, tag, data}.
+
+What should \texttt{store}s do?
+\begin{description}
+	\item[write-through] A \emph{write-through} cache policy writes cache and later writes through the cache to memory.
+	The cache will hold as a write buffer, and the buffer updates memory on its own schedule.
+		\begin{itemize}
+			\item Simpler control logic.
+			\item Predictable timeline.
+			\item More redundancy.
+		\end{itemize}
+	\item[write-back] Instead of a write buffer, write only to cache, and then write the cache block \emph{back} to memory when it's evicted from cache. Now cache blocks need a ``dirty'' bit that tells whether it needs to get written to memory.
+		\begin{itemize}
+			\item More complex control logic.
+			\item Variable timing (0 [hit], 1 [miss and load on clean], or 2 [miss and load on dirty] memory accesses per cache access).
+			\item Less write traffic.
+			\item Less reliable---more possibility for inconsistent state.
+		\end{itemize}
+\end{description}
+
+\section{Cache performance}
+\begin{description}
+	\item[hit rate] proportion of accesses that hit
+	\item[miss rate] \(1 - \left(\text{hit rate}\right)\)
+	\item[miss penalty] time to replace cache block from memory
+	\item[hit time] time to access cache memory (incl.~tag comparison)
+\end{description}
+\textsc{Average Memory Access Time}:
+\begin{align}
+\text{AMAT} &= \text{hit time} + \left(\text{miss rate}\right)\left(\text{miss penalty}\right)
+\end{align}
