@@ -1,0 +1,37 @@
+\chapter{Performance and floating-point}
+What is performance?
+\begin{description}
+	\item[latency] time to complete a single task
+	\item[thoroughput] tasks completed per unit time
+\end{description}
+
+\subsection{CPU Performance Factors}
+CPU time is jointly proportional to \emph{instruction count}, \emph{clock cycles per instruction}, and \emph{clock rate}.
+
+A \emph{workload} is a set of programs run on a computer. Both pgorams and relative frequencies are specified. SPEC\footnote{System Performance Evaluation Cooperative} releases 12 integer programs and 17 floating-point programs. SPECratio is the runtime on an old reference computer divided by the runtime on the new computer. To get a single number, you can report the geometric mean of all the ratios.
+
+\section{Floating-point numbers}
+We want to represent both huge numbers, tiny numbers, and numbers with both whole and fractional parts.
+We want standard arithmetic for all reals, with as much precision as possible.
+
+A ``binary point'' in binary works just like with base 10: 6 bits gets you from 0 to 3.9375. After a multiplication, the binary point is displaced from the MSB the sum of the two inputs' displacements.
+
+We actually want the binary point to float: we represent one integer digit, some fractional digits, and an exponent (the base is called the radix). You declare such numbers in C using \texttt{double} or \texttt{float}.
+
+In the IEEE 754 FP standard, there is 1 bit for \emph{sign}, 8 bits for \emph{exponent}, and 23 bits for \emph{fraction} (actually 1 extra bit):
+\begin{align}
+\left(-1\right)^s \cdot (1 + F) \cdot 2^E
+\end{align}
+Numbers represented go from \(2\cdot10^{\pm38}\).
+
+\subsection{Problems}
+If the absolute value is too big, there's overflow; if it's too small, there's underflow.
+\begin{enumerate}
+	\item 754 double standard has 1 sign, 11 exponent, and 52 fraction, which represent \(2\cdot10^{\pm308}\).
+\end{enumerate}
+
+Zero is represented as all 0s. The exponent is stored with a bias. All 1s represents infinity/NaN.
+
+If you divide by 0, then you get \(\pm \infty\) (exponent all 1, significand 0). Undefined expressions like \(\infty - \infty\) evaluate to NaN (exponent all 1, significand not 0). There are both positive and negative 0s.
+If exponent is 0, significand nonzero, these are denorms, with an implicit exponent of -126.
+
