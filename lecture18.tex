@@ -1,0 +1,82 @@
+\chapter{Parallel processing (SIMD)}
+The reference problem for performance is matrix multiplication:
+\texttt{dgemm} FORTRAN routine (\emph{d}ouble precision \emph{ge}neral \emph{m}atrix \emph{m}ultiplication).
+For \(C = AB\), \(C_{ij} = \sum_k A_{ik}B_{kj}\).
+\begin{minted}{python}
+def dgemm(N, a, b, c):
+  for i in range(N):
+    for j in range(N):
+      c[i + j*N] = 0
+      for k in range(N):
+        c[i + j*N] += a[i + k*N] * b[k + j*N]
+\end{minted}
+\begin{enumerate}
+	\item A square matrix of dimension \(n\times n\) is stored in a linear form in computer memory, hence the dereferencing arithmetic.
+	\item This Python code reaches about 5.4 Mflops.
+\end{enumerate}
+Maybe C will be faster?
+\begin{minted}{C}
+void dgemm_scalar(int N, double *a, double *b, double*c) {
+	for (int i = 0; i < N; i++) {
+		for (int j = 0; j < N; j++) {
+			/* loop over k, etc. */
+		}
+	}
+}
+\end{minted}
+The C code reaches about 1 Gflop, which is 240x faster.
+
+\section{Parallel processing}
+Processor clock rates are not increasing: voltage can't be lowered,
+and cooling can't keep up.
+The only way to get higher speed is to use parallel processing.
+For analogy, airlines are limited by speed of sound and economics (fuel, etc.);
+while they can't decrease latency too much, more and larger airplanes increase throughput.
+
+There are two ways to use parallelism for performance:
+\begin{enumerate}
+	\item Multiprogramming: independent programs in parallel (``easy'')
+	\item Parallel computing: run one program faster (``hard'')
+\end{enumerate}
+
+\subsection{Flynn taxonomy}
+\begin{description}
+	\item[single instruction, single data] one stream each of instructions and data, RISC-V datapath up to now
+	\item[single instruction, multiple data] multiple data streams operated on by one instruction stream
+	\item[multiple instruction, multiple data] independent instructions for independent data streams, simultaneously
+	\item[multiple instruction, single data] single stream operated on more than once (doesn't make sense for performance)
+\end{description}
+Most CPUs these days have SIMD/MIMD. The usual parallel programming style is single-program-multiple-data.
+%
+%\subsection{x86 SIMD registers}
+x86 has 256-bit registers than can be split into 128-bit words, 2 64-bit words, etc.
+To implement SIMD, all you have to do is replicate the datapath a few times and share control lines.
+
+x86 has compiler intrinsics: \texttt{\_\_m256} represents a YMM register (could be 8 single floats), etc.
+If you vectorize the inner loop:
+\begin{minted}{c}
+/* i, j from outer loop */
+__m256d c0 = {0,0,0,0};
+for (int k = 0; k < N; k++) {
+	c0 = __mm256_fmadd__pd(
+			__mm256_load_pd(a + i + k*N),
+			__mm256_broadcast_sd(b + k + j*N),
+			c0);
+}
+/* i += 4 */
+\end{minted}
+
+\section{Amdahl's Law}
+If an enhancement \(E\) speeds up some task by a factor of \(S_E\), but the task is only used \(F\) of the time,
+\begin{align}
+	\text{speedup} &=  \frac{1}{1 - F + \frac{F}{S_E}}
+\end{align}
+Even as \(S_E\to\infty\), speedup would not exceed \(\left(1 - F\right)^{-1}\).
+
+\emph{Strong scaling} is speedup without increasing problem size. \emph{Weak scaling}: speedup when problem size is proportional to number of processors.
+
+(Back to \texttt{dgemm})
+In order to keep the pipeline full (since the common accumulator is a hazard), work in stages of 4 multiply-add intrinsics per iteration.
+But we are still slowing down on large matrices because cache is missing.
+Considering that there are quadratic loads and cubic arithmetic, we really ought to be reading much less than once
+per arithmetic operation. Memory \emph{blocking} would mean splitting matrices into (preferably) small chunks to ensure spatial locality.
