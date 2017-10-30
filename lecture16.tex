@@ -1,1 +1,83 @@
 \chapter{Caches III}
+\section{Review}
+Review of mapping schemes since I don't remember:
+\begin{description}
+	\item[direct-mapped] Suppose there are 1024 blocks of one word each (for 4kB total cache). To identify a cache block for a memory address, we need to pick out 10 bits of the memory address. (and we will choose the upper 10 bits) Parts of a ``row'' in cache (out of the 1024):
+		\begin{description}
+			\item[data] holds the real stuff---a copy of this part of memory.
+			\item[tag] holds the rest of the memory address (mod index).
+			\item [valid] tells if still accurate
+		\end{description}
+		Only \emph{one} candidate location for each memory block.
+		
+		``tall and skinny'': one memory block wide, with only one block per row.
+	\item [four-way set-associative] ``short and fat'': to store 1024 blocks, we store 4 ``ways'' of 256 blocks. Each index will yield 4 potentially cache reads, and you need 4 comparators to check the tag. ``Sets'' are rows, ``ways'' are columns. With set-associative caching, it is faster to look up a ``set'' by index, but you need extra logic (incl.~lots of muxes) to put the output together. Bit fields:
+	\begin{description}
+		\item[offsets] which byte in the word, and which word in the block?
+		\item [index] tells which row of the cache to ``bring down to the edges to feed to the comparators''
+		\item[tag] fully determines memory address
+	\end{description}
+	\emph{tag} gets bigger and \emph{index} gets smaller as associativity increases.	
+	\begin{align}
+		\left(\text{\# sets}\right)\left(\text{\# ways}\right) &= \text{\# blocks} \\
+		\left(\text{\# blocks}\right)\frac{\text{bytes}}{\text{block}} &= \text{cache capacity}
+	\end{align}	
+	How do you choose which cache block to1 kill for replacing a miss? Choose the \emph{way} that was least recently used.
+\end{description}
+
+Write policy choices:
+\begin{description}
+	\item[hit] 
+	\begin{description}
+		\item[write-through] write both cache and memory
+		\item[write-back] write only to cache, then to memory when a dirty-memory cache is evicted (variable time)
+	\end{description}
+	\item[miss] 
+	\begin{description}
+		\item[no write allocate] \emph{store} straight to memory
+		\item[write allocate] \emph{fetch} into cache then delegate to \emph{hit} policy
+	\end{description}
+\end{description}
+Common policy combos are write-through and no-write-allocate, and write-back and write-allocate.
+
+\subsection{Associativity vs.~Performance}
+Increasing associativity (vs.~direct-mapped) decreases miss rate, but the associativity gains are pretty small for big caches. Traditionally L1 caches (32kB instructions and 32kB data) are one-way or some other small number of ways.
+
+%\subsection{Live Q\&A}
+%\begin{enumerate}
+%	\item \emph{How does the cache know }
+%\end{enumerate}
+
+\section{Cache performance}
+There are three things to blame for cache misses:
+\begin{description}
+	\item[compulsory] the very \emph{first time} you access a block, you can't help missing it
+	\begin{itemize}
+		\item count by simulating infinite fully associative cache
+	\end{itemize}
+	\item[capacity] the cache isn't big enough for all the memory the program wants. (solved by bigger cache) 
+	\begin{itemize}
+		\item start at infinite cache then cut in half repeatedly comparing number of misses
+	\end{itemize}
+	\item[conflict] different locations fighting for the same cache spot. (solved by more associativity)
+	\begin{itemize}
+		\item infinite sets, change associativity
+	\end{itemize}
+\end{description}
+
+\subsection{Cache implementation}
+The instruction cache is multiplexed with a NOP for cache misses (all a bubble has to do is set \emph{enable} signals to 0). On the data side, all you have to do is wait for cache to get ready.
+
+\subsection{Performance optimization}
+Optimizing AMAT:
+\begin{enumerate}
+	\item Reduce hit time by using a smaller cache.
+	\item Reduce miss rate by using a larger cache.
+	\item Reduce the miss penalty by using multiple cache levels.
+\end{enumerate}
+Local vs.~global miss rate:
+\begin{description}
+	\item[local] miss rate at L2 is \(\frac{\text{L2 misses}}{\text{L2 accesses}}\), which \(\frac{\text{L2 misses}}{\text{L1 misses}}\)
+	\item[global] miss rate how often you have to go all the way to memory: given by how often every level misses, \(\prod_{i\in\text{levels}}\left(\text{miss rate at level \(i\)}\right)\).
+\end{description}
+It is wise to sacrifice L1 miss rate for L1 hit time, as there is more cache (e.g.~L2) to back those up.
