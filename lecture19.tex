@@ -1,0 +1,40 @@
+\chapter{Thread-level parallelism}
+A \emph{core} is an independent processor, with control and datapath (PC, registers, and ALU).
+Shared resources include memory and often L3 cache.
+
+A \emph{thread} is a sequential flow of instructions that performs some task (``program'').
+Each thread has PC and registers and shared memory. A physical core provides \emph{hardware threads} that execute simultaneously.
+The OS multiplexes \emph{software threads} onto \emph{hardware threads} (those not running are sleeping).
+
+\subsection{Hardware-assisted software multithreading}
+In one core with two threads, some datapath elements (ALU) are shared, while some state elements (PC and registers) are separate.
+
+\begin{itemize}
+	\item Logical threads:
+		\begin{itemize}
+			\item 1\% more hardware, 10\% better performance
+		\end{itemize}
+	\item Multicore:
+		\begin{itemize}
+			\item 50\% more hardware, 100\% better performance
+		\end{itemize}
+\end{itemize}
+
+\section{OpenMP}
+\subsection{\texttt{for} loops}
+\begin{itemize}
+	\item Serial:
+\begin{minted}{c}
+for (int i = 0; i < 100; i++) {
+	// stuff
+}
+\end{minted}
+	\item Parallel:
+\begin{minted}{c}
+#include <omp.h>
+
+#pragma omp parallel for
+for (int i = 0; i < 100; i++) { /* ... */ }
+\end{minted}
+\end{itemize}
+OpenMP uses a fork-join model (just like Java's \texttt{Stream.parallel()}).
