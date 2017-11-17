@@ -1,0 +1,76 @@
+\chapter{Cache Coherence}
+Types of parallelism:
+\begin{itemize}
+	\item Instruction-level parallelism
+	\begin{itemize}
+		\item Pipeline---multiple instructions at once. (limited by hazards)
+		\item \emph{Superscalar}---more than one instruction at a time.
+	\end{itemize}
+	\item Thread-level parallelism
+	\begin{itemize}
+		\item A thread has its own state (PC/regfile).
+		\item Hyper-threading: separate states share ALU.
+	\end{itemize}
+\end{itemize}
+Ways to execute several instructions at once:
+\begin{description}
+	\item[superscalar] Only one thread, but sometimes instructions can be executed at once. Occasional gaps.
+	\item[fine-grained] Execute one (superscalar) cycle of thread 0, then thread 1, etc.
+	\item[coarse-grained] Execute as many instructions as possible from thread 0, then go to thread 1, etc.~then back to executing thread 0. (e.g.~switch while waiting for cache miss)
+	\item[multiprocessing] Each thread has its own (fixed) resources.
+	\item[simultaneous multithreading] All threads at all times to fill pipeline.
+\end{description}
+
+\section{More OpenMP}
+\subsection{\texttt{for} loop}
+The parallel \texttt{for} breaks a loop into chunks. Each iteration must be independent, and no premature exits are allowed. All variables outside the loop, except for the index, are shared.
+
+A way to split up a sum into \texttt{sum} in parallel is \texttt{\#pragma omp for reduction (+ : sum)}, which forks copies of \texttt{sum} and then \emph{reduces} them in the commutative monoid induced by \texttt{+}.
+
+\subsection{Data Race}
+Two accesses form a data race if they occur from different threads, at least one is a write, and they occur one after another. Races are prevented by synchronizing.
+\emph{Locks} control access to shared resources. Can be an integer, for example (\texttt{0} for untaken, \texttt{1} for taken):
+\begin{minted}{c}
+// wait for lock
+while (lock);
+lock = 1;
+// critical section
+lock = 0;
+\end{minted}
+But if two threads run this code and the second enters and exits the loop before the first thread has acquired the lock, there is bad. Hardware must provide atomic read/write that reads and writes in a single instruction. Atomic read/write must hit shared memory.
+
+Atomic read/write has two implementations:
+\begin{enumerate}
+	\item atomically swap register and memory.
+	\begin{itemize}
+		\item used in RISC-V.
+	\end{itemize}
+	\item ``linked'' read and write where \textsc{write} fails if memory has been touched after \textsc{read}.
+	\begin{itemize}
+		\item used in MIPS.
+	\end{itemize}
+\end{enumerate}
+
+\subsection{Atomic Memory Operations}
+Read, operate, write to register, write to memory atomically, e.g.~\texttt{amoadd.w rd,rs2,(rs1)}:
+\begin{enumerate}
+	\item \texttt{t = M[R[rs1]];}
+	\item \texttt{R[rd] = t;}
+	\item \texttt{M[R[rs1]] = t + R{rs2};}
+\end{enumerate}
+
+\subsection{Deadlock}
+Two threads, two locks; each thread has one lock and each thread needs the other's lock.
+
+\section{Multiprocessor cache coherency}
+Even as memory (incl.~locks especially) is shared, low-level caches are not. Caches must be coherent.
+
+It seems that when one processor writes to memory, other caches should invalidate the target. Cache controllers need to hear other processor's behavior too.
+Each cache block now has more states:
+\begin{description}
+	\item[shared] up to date, other caches also have a copy
+	\item[modified] dirty, but can write back because no other cache has a copy.
+	\item[exclusive] up-to-date, no other cache has a copy, so cache can be updated without hitting memory. You need to go to exclusive in order to change the value of a logical memory location (other caches will invalidate their copies).
+	\item[owner] up-to-date, and other caches in \emph{shared}. Other caches can read this cache.
+\end{description}
+The cache coherency protocol is called MOESI: \emph{modified}, \emph{owned}, \emph{exclusive}, \emph{shared}, or \emph{invalid}.
