@@ -1,0 +1,60 @@
+\chapter{Warehouse-scale computing}
+WSC composition is in scales of 1U server, \emph{rack} (48-80 1U servers), and \emph{array} (16-32 racks).
+An array (also known as cluster) is joined by an expensive switch.
+
+WSCs use so much power that it takes power to move power. Power Usage Effectiveness tells how well you're using total power to drive the servers (as opposed to stepping, transmission, cooling, etc.):
+\begin{align}
+\text{PUE} &= \frac{\text{total power}}{\text{power on IT equipment}}
+\end{align}
+A PUE of 1 is perfect efficiency; people used to have 2 but Google has about 1.2.
+
+%Power use doesn't scale (down) very well with utilization.
+
+\section{Cloud computing}
+\begin{enumerate}
+	\item Shared platform with illusion of isolation: collocation with VMs and hypervisors.
+	\item Low-cost cycles: consolidation for economy of scale, multiplexing for resource utilization.
+	\item Elastic service: pay for what you need.
+\end{enumerate}
+
+Cloud services:
+\begin{description}
+	\item[SaaS] deliver apps over Internet, e.g.~Google Docs
+	\item[PaaS] deliver computing stack, e.g.~Hadoop/Spark
+	\item[IaaS] buy computing resources, e.g.~Amazon EC2
+\end{description}
+
+\subsection{Request-level parallelism}
+When there are a lot of requests, there is generally write-independence (mostly reads with not a lot of synchronization needed).
+What happens when you Google ``Randy Katz''?
+\begin{enumerate}
+	\item Direct to closest WSC.
+	\item Front-end load balancer directs to one cluster within WSC.
+	\item Cluster selects a Google Web Server to handle the request and compose the response.
+	\item GWS uses index servers to find documents.
+	\item (In parallel) get ads to display with search.
+	\item Access indexed documents.
+	\item Display search output (HTML).
+\end{enumerate}
+Implementation strategy:
+\begin{enumerate}
+	\item Randomly distribute the entries
+	\begin{enumerate}
+		\item Redundant copies increases RLP, breaks up hot spots, and increases failure tolerance.
+	\end{enumerate}
+	\item Load balance among replicas.
+\end{enumerate}
+
+\subsection{Data-level parallelism}
+SIMD happens on a single processor, but you do DLP over a WSC by running about the same computations all around.
+
+%\subsection{Problem}
+\begin{description}
+\item[Problem] How do you process large amounts of raw data every day with simple computations but large inputs? (Needs to be fault-tolerant.)
+\item[Solution] MapReduce: by specifying the computation in terms of a \texttt{map} function and a \texttt{reduce} function, for parallelism and failure-tolerance (if a worker dies, reassign task) within the MapReduce abstraction.
+\begin{description}
+	\item[map] sends an key-value pair to a key-value pair.
+	\item[(combiner)] distributed, local \texttt{reduce} (optional)
+	\item[reduce] operates on grouped single-key-multiple-value pairs.
+\end{description}
+\end{description}

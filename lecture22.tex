@@ -1,0 +1,66 @@
+\chapter{Operating Systems}
+What is an operating system?
+\begin{enumerate}
+	\item First thing that runs when the computer starts.
+	\item Find and control all devices.
+	\item Starts services (filesystem, network, keyboard).
+	\item Loads, runs, and manages programs:
+	\begin{enumerate}
+		\item Needs to run many programs at the same time (time-sharing).
+		\item Needs to isolate programs from each other.
+		\item Resources are multiplexed between applications.
+	\end{enumerate}
+\end{enumerate}
+
+How does a program interact with the real world (devices)? Connections are maintained by \emph{buses}. (PCI is parallel; many individual device buses are serial.)
+
+How does the processor do I/O?
+\begin{enumerate}
+	\item Special input/output instructions (e.g.~per device, tuned to hardware).
+	\item Memory-mapped I/O: I/O devices are named by memory addresses; load/store using normal instructions. There are a lot of control (key down) and data (what key?) registers.
+\end{enumerate}
+Two ways to handle I/O:
+\begin{description}
+	\item[polling] wait for device to set \texttt{ready} bit, then read/write. (\texttt{ready} could be read or write control.)
+	\item[interrupt] when I/O is ready or needs attention, control is sent to the \emph{interrupt handler}.
+\end{description}
+Traps are the software mechanism for dealing with unusual behavior.
+\begin{description}
+	\item[interrupts] are asynchronous signals (e.g.~I/O is ready) to enter the trap handler.
+	\item[exceptions] are synchronous errors (e.g.~illegal memory R/W)
+\end{description}
+How is an interrupt handled?
+\begin{enumerate}
+	\item Instruction stream is suspended.
+	\item CPU looks up the vector (function address) of interrupt handler in \emph{interrupt vector table} stored in CPU.
+	\item \textsc{jal} to the handler, save PC in \textbf{M}achine \textbf{E}xception \textbf{P}rogram \textbf{Counter}.
+	\item Handler runs, then returns:
+\begin{minted}{asm}
+handler: save registers
+         decode interrupt
+         handle interrupt
+         clear interrupt
+         restore registers
+         mret
+\end{minted}
+\end{enumerate}
+Exceptions are handled like pipeline hazards on a pipelined CPU:
+\begin{enumerate}
+	\item Complete instructions begun before exception.
+	\item Flush instructions currently in pipeline.
+	\item (optional) Store exception cause in status register.
+\end{enumerate}
+What happens at boot? (CPU heads first into a ROM.)
+\begin{enumerate}
+	\item BIOS finds a storage device and loads first sector.
+	\item Bootloader loads kernel and jumps into it.
+	\item OS initializes services and stuff.
+	\item Launch and application that loops for user interaction.
+\end{enumerate}
+The OS runs in supervisor mode, in order to handle things like traps.
+To read a file, launch a process, or allocate memory you need to perform a system call: set up registers and raise a software interrupt (which will be handled by OS).
+All resources and devices are touched only by the OS.
+
+How can multiple programs run simultaneously?
+The OS just switches between processes very quickly (using a context switch),
+using timed interrupts to allocate processor time.
