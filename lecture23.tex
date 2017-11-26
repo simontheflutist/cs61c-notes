@@ -1,0 +1,46 @@
+\chapter{Virtual Memory}
+Virtual memory helps enforce isolation: each program thinks it's running by itself.
+Every thread has its own processor state, but they share memory.
+Processes, however, will not share memory.
+Virtual addresses, however neatly arranged, are mapped to physical addresses onto physical memory.
+There is hardware indirection: two adjacent virtual addresses
+can be very distant stored on physical memory (or even on the hard drive).
+
+Responsibilities of memory manager:
+\begin{enumerate}
+	\item Map virtual to physical addresses.
+	\item Protection: programs cannot touch other programs' memory or OS memory.
+	\item Swap memory to disk in order to provide abstraction of larger memory. 
+\end{enumerate}
+
+\section{Paged memory}
+The fundamental unit of memory is a \emph{page} of greater than 4\,KiB. (The slower the access, the bigger chunks you want to check out at a time.)
+A 32-bit virtual address identifies a page number with its 20 upper bits and an offset with its 12 lower bits.
+
+The memory manager has a \emph{page table} that subs out the 20 upper bits of a virtual address with a new 20 upper bits.
+The OS can also assign the same physical page to several programs.
+Pages can have write protection (e.g.~to prevent memory writes to the \emph{code} segment).
+
+If you kept a full page table for 23-bit virtual addresses at 4\,KiB pages, that single table would be 4\,MiB (too large for a cache).
+Instead, we will store page tables in DRAM. Now there are two more bits added to the page table rows:
+\begin{description}
+	\item[valid] whether the page is allocated.
+	\item[DRAM/disk] tells where the page is stored (memory or disk).
+\end{description}
+As ``cache,'' should virtual memory be write-through or write-back?
+At least code memory should always be clean.
+
+\section{Storing page tables}
+According to the previous calculation, you'd need 1\,GiB of memory just for all the page tables. Solution to big pages:
+\begin{description}
+	\item[increase page size] can potentially waste memory
+	\item[hierarchical page tables] optimization insight: most programs use only top and bottom of memory.
+\end{description}
+
+\subsection{Hierarchical page table}
+A processor register contains a pointer to the \emph{level 1} page table, in which each entry is a pointer to a \emph{level 2} page table (which maps onto physical memory). Unused sections of memory can correspond to unallocated L2 page tables.
+
+The L1 page table must remain in memory; the L2 tables can be paged.
+
+\section{Address translation}
+Every instruction and data access requires looking up an address and checking bit flags. To make this happen in less than one cycle, use \emph{translation lookaside buffers}. A TLB is a fully associative cache \((\text{virtual page number})\to(\text{physical page number})\) that includes \emph{valid} and \emph{DRAM/disk} flags.
