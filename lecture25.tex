@@ -1,0 +1,78 @@
+\chapter{Dependability and RAID}
+\section{Evolution of storage attachment}
+The computer to which a I/O device is connected is called a \emph{host}.
+Just as the OS is responsible for supplying the illusion of memory location, it also uses an allocation table to determine where
+a file is stored (not necessarily contiguously) on a physical disk.
+A recent development is that nowadays we often access our files over the network: TCP/IP protocols communicate with a \emph{network file server} to facilitate a filesystem abstraction.
+Even more recently, the disk drive system itself understands TCP/IP (NAS).
+
+A long time ago, mainframes connected to a HW/SW-specialized \emph{channel} computer that moderated a disk storage subsystem.
+
+\subsection{Modern memory systems}
+In modern systems, memory semantics is used to connect a number of IC components:
+\begin{description}
+	\item[compute] ``CPU'' device with its own memory and accelerators
+	\item[accelerators] FPGAs and GPUs (GPUs have their own memory), which communicate with \emph{compute} through memory
+	\item[pooled memory] ``storage-class memory'' in between ``memory'' and ``storage'' that is shared between all devices.
+	Close in speed to DRAM, persistent like secondary storage.
+\end{description}
+
+The DMA abstraction can also be extended over the network (\textbf{R}emote \textbf{D}irect \textbf{M}emory \textbf{A}ccess)---instead of using CPU to transfer I/O through the network, independent DMA-like state machines allow direct access to remote memory (and memory maps).
+
+\section{Dependability and Redundancy}
+\subsection{Review of 6 Great Ideas}
+\begin{enumerate}
+	\item Design for Moore's Law.
+	\item Abstraction to simplify design.
+	\item Make the common case fast.
+	\item Memory hierarchy.
+	\item Performance via parellelism (instruction-, thread-, task-, and request-level parallelism).
+	\item \textbf{Dependability via redundancy.}
+\end{enumerate}
+
+\subsection{Dependability}
+\begin{description}
+	\item[fault] failure of a component---may not equal failure of the whole system.
+	\item[failure] the service is unusuable.
+\end{description}
+There are two ways to achieve redundancy:
+\begin{description}
+	\item[spatial redundancy] replicated data or check information.
+	\item[temporal redundancy] if it doesn't work, try again.
+\end{description}
+
+\subsection{Measures}
+Reliability is measured by mean-time-to-failure. Interruption is measured by mean-time-to-repair. \(\text{MTBF} = \text{MTTF} + \text{MTTR}\).
+\begin{align}
+\text{availability} &= \frac{\text{MTTF}}{\text{MTTR} + \text{MTTR}}
+\end{align}
+Probability of failure as a function of time is usually named a \emph{bathtub curve}---problems in the beginning and near the end, but likely consistent performance in the middle.
+If a disk has MTTF of 10 years, that means one third of failures will take place before 10 years (failure time is exponential).
+\emph{Annualized Failure Rate} can be computed from MTTF.
+
+\subsection{Dependability design}
+Principle: no single point of failure. ``weakest link.''
+
+Memory systems work with very small storage atom and very small charges, and they have accidentally flipped bits, of two kinds:
+\begin{description}
+	\item[soft error] interfered but not necessarily wrong on read (fixed with refreshing)
+	\item[hard error] chips read wrong data
+\end{description}
+Larger and denser memory technology worsens bit problems.
+
+\section{Error detection and correction}
+\emph{Hamming distance} between two bit strings is the number of different bits.
+
+One way to store error detection information is to add an extra bit so that there are always an even number of 1s in the bit string (XOR all the bits). Parity is only guaranteed to detect single-bit errors.
+
+What if we want to be able to correct an error? We have a way to \emph{correct} a single error and \emph{detect} two errors. For detection alone, we will encode 2 bits using 3 bits with the invariant that every single-bit error takes you to a invalid codeword. If we used 3 bits to encode a single bit, then there is enough information to correct single-bit errors.
+
+Hamming ECC places bits 1, 2, 4, and 8 that ensure parity among bits with 1 in the 1s place, 1 in the 2s place, 1 in the 4s place, and 1 in the 8s place, respectively. As it happens, parity bits cover each data bit uniquely, and parity discrepancies will help you identify 2 errors or fix 1. (If parity 2 and parity 8 are wrong, then bit 10 is wrong.)
+
+\section{RAID}
+\begin{description}
+	\item[RAID 1] full duplication
+	\item[RAID 3] bit-by-bit parity disk
+	\item[RAID 4] block-level parity disk
+	\item[RAID 5] striped parity
+\end{description}
