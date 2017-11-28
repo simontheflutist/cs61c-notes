@@ -1,0 +1,111 @@
+\chapter{DMA, Disks, and Networking}
+\subsection{Virtual memory in the RISC-V pipeline}
+The TLB stands in the way of instruction and data access.
+It is only 32--128 entries, fully associative for maximum speed.
+Page faults are exceptions that hand execution to a different thread.
+
+In memory-mapped I/O, we learned ``programmed I/O'' in which the CPU is instructed to do I/O via memory addresses and I/O is buffered through memory when \texttt{lw}/\texttt{sw} instructions are given.
+In \emph{direct memory access}, we will develop an independent FSM
+that handles data transfer.
+
+\section{Direct Memory Access}
+Problems with programmed I/O:
+\begin{enumerate}
+	\item CPU should be doing work instead of cycling through transfers.
+	\item CPU is way faster than devices.
+	\item CPUs use a lot of power when simpler hardware could suffice.
+\end{enumerate}
+But ``programmed I/O'' also gives up the invariant we've maintained until now that the CPU should have sole control over main memory.
+With DMA, we will remove the CPU middleman and allow I/O devices to target memory directly.
+
+The \emph{DMA engine} will take registers written by the CPU:
+\begin{enumerate}
+	\item memory address to write to
+	\item number of bytes
+	\item which device to interact with (controllers can handle many devices) and direction of transfer
+	\item unit of transfer
+\end{enumerate}
+
+\subsection{Device \(\to\) memory}
+\begin{enumerate}
+	\item CPU programs DMA controller.
+	\item DMA request transfer from device.
+	\item Device transfers to memory.
+	\item Device signals DMA.
+	\item DMA fires interrupt.
+\end{enumerate}
+
+\subsection{Memory \(\to\) device}
+\begin{enumerate}
+	\item CPU confirms device is ready.
+	\item CPU directs DMA to start transfer.
+	\item DMA does the transfer (CPU checks out).
+	\item DMA sends interrupt.
+\end{enumerate}
+
+Where in the memory hierarchy should the DMA go?
+\begin{itemize}
+	\item between L1 cache and CPU:
+	\begin{description}
+		\item[Pro] free coherency
+		\item[Con] CPU's working set filled with alien data; ruins spatial/temporal locality in the short term (which is what L1 is for)
+	\end{description}
+	\item between last cache and main memory:
+	\begin{description}
+		\item[Pro] no cache interference
+		\item[Con] more difficult for coherency---can invalidate caches
+	\end{description}
+\end{itemize}
+
+\section{Disk drive performance}
+Disk Access time is sum of:
+\begin{description}
+	\item[seek time] time to position the head assembly on the proper cylinder
+	\begin{itemize}
+		\item on average, you have to move the arm over \(n_\text{tracks}/3\) tracks
+	\end{itemize}
+	\item[rotation time] time for the disk to rotate to where the first sectors of the block reach the head
+	\begin{itemize}
+		\item averages to half the time of a rotation (worst case)---on 7.2k\,rpm, this works out to 4.17\,ms.
+	\end{itemize}
+	\item[transfer time] time for the sectors of the block and gaps to rotate past the head
+	\item[controller overhead] time for electronics to return data
+\end{description}
+
+\section{Networking}
+Two kinds of networks:
+\begin{description}
+	\item[shared] one channel for everyone: wait for channel to become free before sending
+	\item[switched] communication takes place between pairs only
+\end{description}
+Aggregate bandwidth in a switched network is much bigger.
+
+Network payload contents:
+\begin{description}
+	\item[header] with destination, source, and length
+	\item[payload] with data
+	\item[trailer] with a checksum
+\end{description}
+
+Steps to send:
+\begin{enumerate}
+	\item App copies into OS buffer.
+	\item OS builds packet and starts timer.
+	\item OS sends data to network interface and says to start.
+\end{enumerate}
+Steps to receive:
+\begin{enumerate}
+	\item OS copies data from interface into buffer.
+	\item OS checks checksum: ACK if okay, otherwise ignore (sender will resend on timer).
+	\item Copy data to memory map, interrupt to resume.
+\end{enumerate}
+
+Networking takes layers:
+\begin{enumerate}
+	\item Application (chat, game, etc.)
+	\item Transport (TCP, UDP)
+	\item Network (IP)---making the connection
+	\item Data link layer (ethernet)---handshakes to share physical resources
+	\item Physical link (shape of physical signal)
+\end{enumerate}
+Every layer encapsulates information from above by adding a header and a trailer. IP tries to deliver; TCP guarantees delivery.
