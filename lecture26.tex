@@ -1,0 +1,65 @@
+\chapter{Stuff}
+\section{This will not (all) be on the exam}
+Computing in the age of WSCs migrates to two extremes: mobile (``swarm'') and the ``cloud.''
+\subsection{3 Generations of WSC}
+\begin{description}
+	\item[2000] commercial off-the-shelf computers, switches, and racks
+	\item[2010] custom computers, switches, and racks, but COTS chips
+	\item[2020] custom computers, switches, and racks using custom chips (FireBox is here)
+	\begin{itemize}
+		\item transition from Linux/x86 to \textsc{wsc-os}/\textsc{wsc-SoC}
+	\end{itemize}
+\end{description}
+\subsection{Fault tolerance}
+\begin{description}
+	\item[old conventional wisdom] fault tolerance is critical---reliable whole from unreliable parts
+	\item[new conventional wisdom] tail tolerance\footnote{avoids inconsistency in performance---``worst case''} (\emph{slow}\,=\,\emph{failure})---predictable response from less predictable parts
+\end{description}
+\subsection{Cost-performance}
+\begin{description}
+	\item[conventional wisdom] optimize efficiency for the \emph{average} case
+	\item[new wisdom] target the worst case
+\end{description}
+\subsection{Tail performance techniques}
+Software:
+\begin{enumerate}
+	\item Reduce component variation
+	\begin{enumerate}
+		\item different service classes and queues
+		\item break up long running requests
+	\end{enumerate}
+	\item Dealing with variability
+	\begin{description}
+		\item[hedged requests] let different nodes race a request if it's too long
+		\item[tied requests] different requests that should finish at the same time should not be in the same queue
+	\end{description}
+\end{enumerate}
+Hardware:
+\begin{enumerate}
+	\item More bandwidth \ensuremath{\implies} less waiting on I/O bounds (e.g.~\texttt{shuffle} in MapReduce)
+	\item Reduce per-message overhead (short-circuiting software protocol layers)
+	\item Flexible resource partitioning (e.g.~pooled memory)
+\end{enumerate}
+
+\subsection{Memory hierarchy}
+\begin{align*}
+	\text{\textsc{dram}} &\to \text{high-\textsc{bw} \textsc{dram}}\\
+	\text{disk} &\to \text{bulk non-volatile memory}\\
+	\text{tape} &\to \text{disk}
+\end{align*}
+\begin{description}
+	\item[old CW] 2D flash capacity will scale according to Moore's Law
+	\item[new CW] will not---we need big non-volatile memory with the read latency of flash but good endurance. (A lot of research into new memory at Cal---go bears!)
+\end{description}
+
+\subsection{WSC security}
+\begin{description}
+	\item[old CW] cyber- and physical security at borders of WSC; no needs for encryption within the WSC
+	\item[new CW] data needs to be secured even within WSC transactions
+\end{description}
+
+\subsection{Custom chips}
+Because Moore's Law is in its last days, the only way to increase system performance is to work above the transistor level (specialized hardware, e.g.~processors in phones). When transistor scaling stops, custom chips will be more affordable.
+
+\section{FireBox}
+A FireBox-based WSC will have high-BW memory across up to 1000 SoCs with 100 cores each, with up to 100PB NVM. (High-radix optical switches.) \emph{there's too much stuff to write down\ldots}
